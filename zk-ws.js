@@ -3,6 +3,8 @@ const axios = require("axios");
 const FormData = require("form-data");
 
 const API_URL = process.env.API_URL;
+const USER_ADMIN = process.env.USER_ADMIN;
+const USER_PASSWORD = process.env.USER_PASSWORD;
 
 let sessionId = "";
 let headerCookie = null;
@@ -52,8 +54,8 @@ async function loginAndGetSessionId() {
     const response = await axios.post(
       `${API_URL}/login/`,
       formUrlEncoded({
-        username: "admin",
-        password: "rootpass1234",
+        username: USER_ADMIN,
+        password: USER_PASSWORD,
         captcha: "",
         template10: "",
         login_type: "pwd",
@@ -118,7 +120,6 @@ function createWebSocketConnection() {
       transaction.list = list;
     } else {
       if (list.length > 0) {
-        console.log("transaction.list.length ", transaction.list.length);
         transaction.list.unshift(list[0]);
         if (transaction.list.length > 6) {
           transaction.list.pop();
@@ -141,6 +142,38 @@ function createWebSocketConnection() {
     return await loginAndGetSessionId();
   });
 }
+async function loginApi() {
+  try {
+    const response = await axios.post(`${API_URL}/jwt-api-token-auth/`, {
+      username: "adminapi",
+      password: "adminapi123",
+    });
+    if (response.data && response.data.token) {
+      console.log(response.data);
+      return response.data.token;
+    }
+    return false;
+  } catch (err) {
+    console.log("loginApi", err.message);
+    return false;
+  }
+}
+
+async function getListUser(token) {
+  try {
+    const response = await axios.get(`${API_URL}/personnel/api/employees/`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `JWT ${token}`,
+      },
+    });
+    console.log(response);
+    return false;
+  } catch (err) {
+    console.log("getListUser", err.message);
+    return false;
+  }
+}
 
 function sender() {
   // serverVuejs.on("connection", (socket) => {
@@ -158,4 +191,4 @@ function sender() {
   //   });
   // });
 }
-module.exports = { loginAndGetSessionId, sender };
+module.exports = { loginAndGetSessionId, sender, loginApi, getListUser };
